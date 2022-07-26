@@ -63,6 +63,16 @@ function TimeSection() {
 
   }
 
+  this.from_quaver = function(o) {
+    try {
+      this.offset = o.get("StartTime", 0);
+      this.bpm = o["Bpm"];
+      this.success = 1;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   this.to_vib = function() {
     return `\noff fb ${this.offset}:\nbpm ${this.bpm}\n#\n`;
   }
@@ -93,6 +103,17 @@ function Note() {
       console.log(e);
     }
 
+  }
+
+  this.from_quaver = function(o) {
+    try {
+      this.time = o["StartTime"];
+      this.hits[o["Lane"] - 1] = 1;
+
+      this.success = 1;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   this.to_vib = function() {
@@ -155,6 +176,8 @@ function osumania(input, kwargs = {}) {
       }
 
       if (ho.success) {
+        // accessing an array value that doesn't exist doesn't throw an error
+        // in Javascript, so we have to do it a different way
         if (notes.from_last(1) != undefined) {
           if (ho.time == notes.from_last(1).time) {
             let nn = notes.from_last(1);
@@ -178,7 +201,7 @@ function osumania(input, kwargs = {}) {
     let next_shadow_time = 0;
     let ok_notes = [];
     for (let note of notes) {
-      if note.time >= next_shadow_time {
+      if (note.time >= next_shadow_time) {
         ok_notes.push(note);
         next_shadow_time = note.time + shadow;
       }
@@ -210,4 +233,97 @@ function osumania(input, kwargs = {}) {
   }
 
   return outstr;
+}
+
+function quaver(input, kwargs = {}) {
+  let data = jsyaml.load(input);
+
+  let outstr = "";
+  let timing_points = [];
+  let notes = [];
+  let shadow = kwargs.get("shadow", 0);
+  let bpm_scroll_speed = kwargs.get("bpm_scroll_speed", 1);
+
+  if (data["Mode"] != 'Keys4') {
+    console.log(data["Mode"])
+    alert("This map is not a 4-key map");
+    return;
+  }
+
+  for (let i of data["TimingPoints"]) {
+    let tp = new TimeSection();
+    tp.from_quaver(i);
+    timing_points.push(tp);
+  }
+
+  console.log(data["HitObjects"])
+  for (let i of data["HitObjects"]) {
+
+    h = new Note();
+    let append = false;
+
+    try {
+
+      if (notes.from_last(1).time == i["StartTime"]) {
+        h = notes.from_last(1);
+      } else {
+        throw new Error();
+      }
+
+    } catch (e) {
+
+      append = true;
+
+    } finally {
+
+      h.from_quaver(i);
+      if (append) {
+        notes.push(h);
+      }
+
+    }
+
+
+  }
+
+    let headers = "meta FileFormat VibRibbonMinus";
+
+    if (shadow) {
+      // Only allow note in a certain amount of time
+      let next_shadow_time = 0;
+      let ok_notes = [];
+      for (let note of notes) {
+        if (note.time >= next_shadow_time) {
+          ok_notes.push(note);
+          next_shadow_time = note.time + shadow;
+        }
+      notes = ok_notes;
+      }
+    }
+
+    if (bpm_scroll_speed) {
+      for (let i of timing_points) {
+        let n = new Note();
+        n.time = i.offset;
+        n.special = "scroll";
+        n.value = calc_scroll_speed(i.bpm);
+        notes.push(n);
+      }
+      notes.sort((a, b) => (a.time > b.time) ? 1 : -1)
+      headers += `\nmeta ScrollSpeed ${calc_scroll_speed(timing_points[0].bpm)}`
+    }
+
+    outstr += headers;
+    for (let i of timing_points) {
+      outstr += i.to_vib();
+    }
+
+    outstr += "\nstart\n"
+
+    for (let i of notes) {
+      outstr += i.to_vib();
+    }
+
+    return outstr;
+
 }
