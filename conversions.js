@@ -18,6 +18,15 @@ Array.prototype.from_last = function (idx) {
   return this[this.length - idx];
 };
 
+function enumerate(l) {
+  r = [[],[]];
+  for (let i = 0; i < l.length; i++) {
+    r[0].push(i);
+    r[1].push(l[i]);
+  }
+  return r;
+}
+
 function TimeSection() {
   this.bpm = 120;
   this.offset = 0;
@@ -58,7 +67,7 @@ function Note() {
   this.special = "";
   this.value = 0;
 
-  function from_osumania(txt) {
+  this.from_osumania = function(txt) {
 
     try {
 
@@ -75,13 +84,16 @@ function Note() {
 
   }
 
-  function to_vib() {
+  this.to_vib = function() {
     let vib_str = `m ${this.time} `;
     let tp = '';
 
     if (!self.special) {
-      for (const [idx, v] of this.hits) {
-        if tp.length == 2 {
+      for (let en = 0; en < this.hits.length; en++) {
+        // idx, v
+        let idx = en
+        let v = this.hits[en];
+        if (tp.length == 2) {
           break;
         }
         if (v) {
@@ -102,6 +114,7 @@ function Note() {
 }
 
 function osumania(input, kwargs = {}) {
+  console.log(input)
   let data = input.split("\n");
 
   let outstr = "";
@@ -125,6 +138,11 @@ function osumania(input, kwargs = {}) {
     else if (state == "[HitObjects]") {
       let ho = new Note();
       ho.from_osumania(inst);
+
+      if (isNaN(ho.time)) {
+        ho.success = 0;
+      }
+
       if (ho.success) {
         if (notes.from_last(1) != undefined) {
           if (ho.time == notes.from_last(1).time) {
