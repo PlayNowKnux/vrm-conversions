@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+body {
+  background: black;
+  color: #eeeeee;
+  font-family: 'Roboto', sans-serif;
+}
+
+#header {
+  text-align: center;
+  line-height: 0.4;
+}
+
+#main-table {
+  width: 100%;
+}
+
+.kindabig {
+  font-size: 30px;
+}
+
+td {
+  width: 33%;
+  height: 100%;
+  overflow-x: hidden;
+}

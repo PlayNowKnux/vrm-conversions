@@ -1,13 +1,41 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
   <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="style.css"></link>
+    <title>Vib-Ribbon Minus Conversion Tool</title>
     <script src="js-yaml.min.js"></script>
     <script src="conversions.js"></script>
   </head>
   <body>
-    <textarea id="osu"></textarea>
-    <br>
-    <button id="convert" onclick="convert()">Convert</button>
-    <pre id="result"></pre>
+    <div id="header">
+      <h1>vib-ribbon minus</h1>
+      <h3>conversion tool</h3>
+    </div>
+    <table id="main-table">
+      <tr class="kindabig">
+        <td>1. open</td>
+        <td>2. convert</td>
+        <td>3. download</td>
+      </tr>
+      <tr>
+        <td>
+          <input type="file" id="file">
+        </td>
+        <td>
+          <select id="gameName">
+            <option value="osu!mania">osu!mania</option>
+            <option value="Quaver">Quaver</option>
+          </select>
+          <br>
+          <button id="convert" onclick="convert()">Convert</button>
+        </td>
+        <td>
+          <a id="downloadLink"></a>
+          <p id="downloadDesc">A download link will appear here</p>
+        </td>
+      </tr>
+    </table>
   </body>
   <script src='ui.js'></script>
 </html>

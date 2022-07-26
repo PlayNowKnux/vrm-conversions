@@ -16,12 +16,27 @@ Object.prototype.get = function(key, fallback = null) {
 String.prototype.startswith = function(val) {
   return this.substring(0, val.length) == val;
 }
+String.prototype.endswith = function(val) {
+  return this.substring(this.length - val.length, this.length) == val;
+}
 
 Array.prototype.from_last = function (idx) {
   return this[this.length - idx];
 };
 
 ///////////////////////////////////////////////////////////////
+
+var ra;
+try {ra = replaceAll} catch(e) {ra = false};
+if (!ra) {
+  String.prototype.replaceAll = function(t, r) {
+    var st = this;
+    while (st.includes(t)) {
+      st = st.replace(t, r);
+    }
+    return st;
+  }
+}
 
 function calc_scroll_speed(bpm, kwargs = {}) {
   let precedent = kwargs.get("default_bpm", 120) * kwargs.get("default_scroll", 2000)
@@ -147,7 +162,7 @@ function Note() {
 }
 
 function osumania(input, kwargs = {}) {
-  let data = input.split("\n");
+  let data = input.replaceAll('\r','').split("\n");
 
   let outstr = "";
   let timing_points = [];
@@ -160,7 +175,7 @@ function osumania(input, kwargs = {}) {
     if (inst.startswith("[")) {
         state = inst;
     }
-    else if (state == "[TimingPoints]") {
+    if (state == "[TimingPoints]") {
         let tp = new TimeSection();
         tp.from_osumania(inst);
         if (tp.success) {
@@ -193,7 +208,7 @@ function osumania(input, kwargs = {}) {
     }
 
   }
-
+  console.log(timing_points)
   let headers = "meta FileFormat VibRibbonMinus";
 
   if (shadow) {
@@ -263,7 +278,9 @@ function quaver(input, kwargs = {}) {
     let append = false;
 
     try {
-
+      // This section is used for handling complex pieces
+      // it doesn't append to the list until all cues
+      // are put into the correct piece
       if (notes.from_last(1).time == i["StartTime"]) {
         h = notes.from_last(1);
       } else {
