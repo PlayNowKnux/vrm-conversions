@@ -173,7 +173,18 @@ function osumania(input, kwargs = {}) {
 
   let headers = "meta FileFormat VibRibbonMinus";
 
-  // add shadow code here
+  if (shadow) {
+    // Only allow note in a certain amount of time
+    let next_shadow_time = 0;
+    let ok_notes = [];
+    for (let note of notes) {
+      if note.time >= next_shadow_time {
+        ok_notes.push(note);
+        next_shadow_time = note.time + shadow;
+      }
+    notes = ok_notes;
+    }
+  }
 
   if (bpm_scroll_speed) {
     for (let i of timing_points) {
