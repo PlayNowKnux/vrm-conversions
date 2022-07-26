@@ -1,6 +1,9 @@
+// These functions are for easier porting from Python
+
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 const float = (num) => parseFloat(num);
 const int = (num) => parseInt(num);
+const round = Math.round;
 
 Object.prototype.get = function(key, fallback = null) {
   if (key in this) {
@@ -17,6 +20,13 @@ String.prototype.startswith = function(val) {
 Array.prototype.from_last = function (idx) {
   return this[this.length - idx];
 };
+
+///////////////////////////////////////////////////////////////
+
+function calc_scroll_speed(bpm, kwargs = {}) {
+  let precedent = kwargs.get("default_bpm", 120) * kwargs.get("default_scroll", 2000)
+  return Math.round(precedent / bpm)
+}
 
 function enumerate(l) {
   r = [[],[]];
@@ -78,6 +88,7 @@ function Note() {
       this.time = int(data[2]);
       this.success = 1;
 
+
     } catch (e) {
       console.log(e);
     }
@@ -88,7 +99,7 @@ function Note() {
     let vib_str = `m ${this.time} `;
     let tp = '';
 
-    if (!self.special) {
+    if (!this.special) {
       for (let en = 0; en < this.hits.length; en++) {
         // idx, v
         let idx = en
@@ -105,6 +116,7 @@ function Note() {
       switch (this.special) {
         case "scroll":
           tp += `&speed=${this.value}`;
+          break;
       }
     }
 
@@ -114,7 +126,6 @@ function Note() {
 }
 
 function osumania(input, kwargs = {}) {
-  console.log(input)
   let data = input.split("\n");
 
   let outstr = "";
@@ -162,7 +173,19 @@ function osumania(input, kwargs = {}) {
 
   let headers = "meta FileFormat VibRibbonMinus";
 
-  // add bpm scroll speed sync here
+  // add shadow code here
+
+  if (bpm_scroll_speed) {
+    for (let i of timing_points) {
+      let n = new Note();
+      n.time = i.offset;
+      n.special = "scroll";
+      n.value = calc_scroll_speed(i.bpm);
+      notes.push(n);
+    }
+    notes.sort((a, b) => (a.time > b.time) ? 1 : -1)
+    headers += `\nmeta ScrollSpeed ${calc_scroll_speed(timing_points[0].bpm)}`
+  }
 
   outstr += headers;
   for (let i of timing_points) {
