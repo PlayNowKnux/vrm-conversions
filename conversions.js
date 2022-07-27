@@ -151,7 +151,7 @@ function Note() {
       tp += this.special + " ";
       switch (this.special) {
         case "scroll":
-          tp += `&speed=${this.value}`;
+          tp += `&speed=${this.value};`;
           break;
       }
     }
